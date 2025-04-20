@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Order = require('../models/Order');
+const Order = require('../models/orderModel');
 const User = require('../models/User');
 const admin = require('firebase-admin');
 const { verifyToken } = require('../middleware/auth');
@@ -22,8 +22,8 @@ const verifyTokenMiddleware = async (req, res, next) => {
   }
 };
 
-// Create a new order
-router.post('/', verifyToken, async (req, res) => {
+// Create a new order (ONLY /create, removed /)
+router.post('/create', verifyToken, async (req, res) => {
   try {
     const order = new Order({
       ...req.body,
@@ -32,7 +32,6 @@ router.post('/', verifyToken, async (req, res) => {
     });
     const newOrder = await order.save();
     
-    // Emit order update via WebSocket
     req.app.get('io').emit('orderUpdate', {
       orderId: newOrder._id,
       status: newOrder.status,

@@ -48,7 +48,8 @@ router.use((req, res, next) => {
 router.post('/register', verifyToken, async (req, res) => {
   try {
     console.log('Registration request received:', req.body);
-    const { name, email, role, phone, address, gender } = req.body;
+    // Extract latitude and longitude from request body if provided
+    const { name, email, role, phone, address, gender, latitude, longitude } = req.body;
     const { uid } = req.user;
 
     // Check if user already exists
@@ -72,7 +73,9 @@ router.post('/register', verifyToken, async (req, res) => {
       phone: phone || '',
       address: address || '',
       gender: gender || 'other',
-      role: dbRole
+      role: dbRole,
+      latitude: latitude || null, // Store latitude if provided
+      longitude: longitude || null // Store longitude if provided
     });
 
     await user.save();
@@ -144,17 +147,7 @@ router.get('/profile', verifyToken, async (req, res) => {
     let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
-      console.log('User not found in MongoDB, auto-creating');
-      // Determine a default role - can be customized
-      user = new User({
-        firebaseUid: uid,
-        email,
-        name: email ? email.split('@')[0] : 'User', // Generate name from email
-        role: 'customer', // Default role
-        gender: 'other',  // Default gender
-      });
-      await user.save();
-      console.log('User auto-created in MongoDB:', user);
+      return res.status(404).json({ message: 'User not found in MongoDB' });
     }
 
     res.json({
@@ -408,6 +401,63 @@ router.get('/sync-users', async (req, res) => {
   } catch (error) {
     console.error('Sync error:', error);
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Endpoint to update user location on login
+router.post('/login-location', async (req, res) => {
+  try {
+    const { email, latitude, longitude } = req.body;
+    if (!email || latitude == null || longitude == null) {
+      return res.status(400).json({ message: 'Missing email or coordinates' });
+    }
+    const user = await User.findOneAndUpdate(
+      { email },
+      { latitude, longitude },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ message: 'Location updated', user: { email: user.email, latitude: user.latitude, longitude: user.longitude } });
+  } catch (error) {
+    console.error('Login-location update error:', error);
+    res.status(500).json({ message: 'Failed to update location', error: error.message });
+  }
+});
+
+// Get user's address (for Cart)
+router.get('/user/address', verifyToken, async (req, res) => {
+  try {
+    const { uid } = req.user;
+    const user = await User.findOne({ firebaseUid: uid });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ address: user.address });
+  } catch (error) {
+    console.error('Error fetching user address:', error);
+    res.status(500).json({ message: 'Failed to fetch address', error: error.message });
+  }
+});
+
+// Get user's profile (for Cart, returns gender and other info)
+router.get('/user/profile', verifyToken, async (req, res) => {
+  try {
+    const { uid } = req.user;
+    const user = await User.findOne({ firebaseUid: uid });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      gender: user.gender,
+      name: user.name,
+      email: user.email,
+      phone: user.phone
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Failed to fetch profile', error: error.message });
   }
 });
 

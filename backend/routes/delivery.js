@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const Order = require('../models/Order');
+const Order = require('../models/orderModel');
 const admin = require('firebase-admin');
 
 // Middleware to verify Firebase token

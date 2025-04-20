@@ -1,11 +1,11 @@
 const socketIO = require('socket.io');
 const User = require('./models/User');
-const Order = require('./models/Order');
+const Order = require('./models/orderModel');
 
 const configureSocket = (server) => {
   const io = socketIO(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
       methods: ['GET', 'POST'],
       credentials: true
     }

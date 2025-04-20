@@ -31,8 +31,8 @@ const Cart = () => {
   );
 
   // State for payment mode and delivery instructions
-  const [paymentMode, setPaymentMode] = React.useState("Cash on Delivery");
-  const [deliveryInstructions, setDeliveryInstructions] = React.useState("");
+  const [paymentMethod, setPaymentMethod] = React.useState("Cash on Delivery");
+  const [specialInstructions, setSpecialInstructions] = React.useState("");
 
   // WebSocket connection setup
   useEffect(() => {
@@ -69,12 +69,12 @@ const Cart = () => {
       try {
         setIsLoading(true);
         const [addressResponse, userResponse] = await Promise.all([
-          axios.get('http://localhost:5000/api/user/address', {
+          axios.get('http://localhost:8000/api/user/address', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           }),
-          axios.get('http://localhost:5000/api/user/profile', {
+          axios.get('http://localhost:8000/api/user/profile', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -111,8 +111,8 @@ const Cart = () => {
         })),
         totalAmount: totalPrice + 20,
         deliveryAddress: userAddress,
-        paymentMode,
-        deliveryInstructions,
+        paymentMethod,
+        specialInstructions,
         preferWomenDelivery,
         orderStatus: "Pending",
         orderDate: new Date().toISOString()
@@ -231,8 +231,8 @@ const Cart = () => {
           <div className="payment-mode">
             <h3>Payment Mode</h3>
             <select
-              value={paymentMode}
-              onChange={(e) => setPaymentMode(e.target.value)}
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
               className="payment-dropdown"
             >
               <option value="Cash on Delivery">Cash on Delivery</option>
@@ -244,8 +244,8 @@ const Cart = () => {
           <div className="delivery-instructions">
             <h3>Delivery Instructions</h3>
             <textarea
-              value={deliveryInstructions}
-              onChange={(e) => setDeliveryInstructions(e.target.value)}
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
               placeholder="Add instructions for the delivery partner..."
               className="delivery-textarea"
             />

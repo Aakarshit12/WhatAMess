@@ -43,6 +43,14 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  latitude: {
+    type: Number,
+    required: false
+  },
+  longitude: {
+    type: Number,
+    required: false
+  },
   paymentStatus: {
     type: String,
     enum: ['pending', 'completed', 'failed'],

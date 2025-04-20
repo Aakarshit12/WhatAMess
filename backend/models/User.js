@@ -35,11 +35,19 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'mess_owner', 'delivery_partner'],
+    enum: ['user', 'mess_owner', 'delivery_partner', 'customer'],
     default: 'user'
   },
   fcmToken: {
     type: String
+  },
+  latitude: {
+    type: Number,
+    required: false
+  },
+  longitude: {
+    type: Number,
+    required: false
   },
   createdAt: {
     type: Date,

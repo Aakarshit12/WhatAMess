@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -145,6 +145,7 @@ const Login = () => {
     password: '',
   });
 
+  // Add latitude and longitude to signup state
   const [signupData, setSignupData] = useState({
     name: '',
     email: '',
@@ -153,6 +154,8 @@ const Login = () => {
     messName: '',
     address: '',
     gender: '',
+    latitude: null, // User's latitude
+    longitude: null // User's longitude
   });
 
   const validateForm = (data, isSignup = false) => {
@@ -206,10 +209,45 @@ const Login = () => {
       return;
     }
 
+    let latitude = null;
+    let longitude = null;
+    // Request user's geolocation before login
+    if (navigator.geolocation) {
+      await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+            resolve();
+          },
+          (error) => {
+            setSnackbar({
+              open: true,
+              message: 'Location permission is recommended for login. You may proceed, but some features may be limited.',
+              severity: 'info'
+            });
+            resolve();
+          }
+        );
+      });
+    }
+
     setLoading(true);
     try {
       // Use the enhanced login function that returns both user and role
       const result = await login(loginData.email, loginData.password);
+      // Optionally: send location to backend if needed
+      if (latitude !== null && longitude !== null) {
+        try {
+          await axios.post('http://localhost:8000/api/auth/login-location', {
+            email: loginData.email,
+            latitude,
+            longitude
+          });
+        } catch (locErr) {
+          console.warn('Failed to send location on login:', locErr);
+        }
+      }
       console.log("Login successful, received role:", result.role);
       
       // Use the role directly from the login response for immediate redirection
@@ -237,9 +275,33 @@ const Login = () => {
     }
   };
 
+  // Handle user signup, including geolocation
   const handleSignup = async () => {
+    let latitude = null;
+    let longitude = null;
+
+    // Request user's geolocation before signup
+    if (navigator.geolocation) {
+      await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+            resolve();
+          },
+          (error) => {
+            setSnackbar({
+              open: true,
+              message: 'Location permission is required for signup. Please allow location access.',
+              severity: 'warning'
+            });
+            resolve();
+          }
+        );
+      });
+    }
+
     const formErrors = validateForm(signupData, true);
-    
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
       return;
@@ -258,6 +320,8 @@ const Login = () => {
         phone: signupData.phone,
         address: signupData.address,
         gender: signupData.gender,
+        latitude, // Send captured latitude
+        longitude // Send captured longitude
       }, {
         headers: {
           Authorization: `Bearer ${token}`

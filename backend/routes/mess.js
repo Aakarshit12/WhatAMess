@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Mess = require('../models/Mess');
+const Mess = require('../models/messModel');
 const MenuItem = require('../models/MenuItem');
 const User = require('../models/User');
 const admin = require('firebase-admin');
