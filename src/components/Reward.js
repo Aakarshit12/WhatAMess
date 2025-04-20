@@ -9,7 +9,7 @@ const Reward = () => {
   const [totalPoints, setTotalPoints] = useState(0);
   const [displayedPoints, setDisplayedPoints] = useState(0);
   const [loading, setLoading] = useState(true);
-  const { socket, isConnected } = useWebSocket();
+  const { emit } = useWebSocket();
   const prevDisplayedPoints = useRef(displayedPoints);
 
   // Fetch initial rewards data
@@ -45,56 +45,51 @@ const Reward = () => {
 
   // Listen for WebSocket updates
   useEffect(() => {
-    if (socket && isConnected) {
-      // Subscribe to order completion events
-      socket.emit('subscribe_rewards', {
-        userId: localStorage.getItem('userId')
-      });
+    emit('subscribe_rewards', {
+      userId: localStorage.getItem('userId')
+    });
 
-      // Handle order completion and reward updates
-      socket.on('order_completed', (data) => {
-        const newReward = {
-          id: Date.now(),
-          title: 'Order Complete',
-          date: new Date().toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-          }),
-          points: data.rewardPoints,
-          type: 'earned'
-        };
+    // Handle order completion and reward updates
+    emit.on('order_completed', (data) => {
+      const newReward = {
+        id: Date.now(),
+        title: 'Order Complete',
+        date: new Date().toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        }),
+        points: data.rewardPoints,
+        type: 'earned'
+      };
 
-        setRewardHistory(prev => [newReward, ...prev]);
-        setTotalPoints(prev => prev + data.rewardPoints);
-      });
+      setRewardHistory(prev => [newReward, ...prev]);
+      setTotalPoints(prev => prev + data.rewardPoints);
+    });
 
-      // Handle reward redemption updates
-      socket.on('reward_redeemed', (data) => {
-        const newRedemption = {
-          id: Date.now(),
-          title: data.rewardTitle,
-          date: new Date().toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-          }),
-          points: data.points,
-          type: 'spent'
-        };
+    // Handle reward redemption updates
+    emit.on('reward_redeemed', (data) => {
+      const newRedemption = {
+        id: Date.now(),
+        title: data.rewardTitle,
+        date: new Date().toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        }),
+        points: data.points,
+        type: 'spent'
+      };
 
-        setRewardHistory(prev => [newRedemption, ...prev]);
-        setTotalPoints(prev => prev - data.points);
-      });
-    }
+      setRewardHistory(prev => [newRedemption, ...prev]);
+      setTotalPoints(prev => prev - data.points);
+    });
 
     return () => {
-      if (socket) {
-        socket.off('order_completed');
-        socket.off('reward_redeemed');
-      }
+      emit.off('order_completed');
+      emit.off('reward_redeemed');
     };
-  }, [socket, isConnected]);
+  }, []);
 
   // Animate points counter
   useEffect(() => {
@@ -135,7 +130,7 @@ const Reward = () => {
 
       if (response.data.success) {
         // The WebSocket will handle the update of the UI
-        socket.emit('redeem_reward', {
+        emit('redeem_reward', {
           userId: localStorage.getItem('userId'),
           points: 100,
           rewardType: 'delivery_discount'

@@ -21,7 +21,7 @@ const center = { lat: 12.9716, lng: 77.5946 }; // Bangalore
 const AcceptPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { socket, isConnected } = useWebSocket();
+  const { emit } = useWebSocket();
   const { orderId } = location.state || {};
 
   // Map loading and reference
@@ -81,29 +81,22 @@ const AcceptPage = () => {
 
   // WebSocket connection for real-time updates
   useEffect(() => {
-    if (socket && isConnected && orderId) {
-      socket.emit('join_delivery_room', { orderId });
+    if (orderId) {
+      emit('join_delivery_room', { orderId });
 
-      socket.on('order_status_update', (data) => {
-        if (data.orderId === orderId) {
-          setOrderDetails(prev => ({ ...prev, ...data }));
-        }
-      });
+      // If your WebSocket context exposes event listeners, use them here, e.g.:
+      // emit.on('order_status_update', ...)
+      // emit.on('customer_location_update', ...)
+      // If not, this should be handled in the WebSocket context/provider.
 
-      socket.on('customer_location_update', (data) => {
-        if (data.orderId === orderId) {
-          setToLocation(data.newAddress);
-          handleLocationSearch(null, data.newAddress);
-        }
-      });
-
+      // CLEANUP: If your context exposes an off method, use it here.
       return () => {
-        socket.emit('leave_delivery_room', { orderId });
-        socket.off('order_status_update');
-        socket.off('customer_location_update');
+        emit('leave_delivery_room', { orderId });
+        // emit.off('order_status_update');
+        // emit.off('customer_location_update');
       };
     }
-  }, [socket, isConnected, orderId]);
+  }, [emit, orderId]);
 
   // Get user's current location
   useEffect(() => {
@@ -208,12 +201,10 @@ const AcceptPage = () => {
           });
 
           // Update order status with ETA
-          if (socket && isConnected) {
-            socket.emit('update_delivery_eta', {
-              orderId,
-              eta: leg.duration.text
-            });
-          }
+          emit('update_delivery_eta', {
+            orderId,
+            eta: leg.duration.text
+          });
           
           if (mapRef.current) {
             const bounds = new window.google.maps.LatLngBounds();
@@ -234,12 +225,10 @@ const AcceptPage = () => {
         }
       });
 
-      if (socket && isConnected) {
-        socket.emit('delivery_started', {
-          orderId,
-          deliveryPartnerLocation: userLocation
-        });
-      }
+      emit('delivery_started', {
+        orderId,
+        deliveryPartnerLocation: userLocation
+      });
 
       // Start sending location updates
       startLocationUpdates();
@@ -258,12 +247,10 @@ const AcceptPage = () => {
           };
           setUserLocation(location);
           
-          if (socket && isConnected) {
-            socket.emit('update_delivery_location', {
-              orderId,
-              location
-            });
-          }
+          emit('update_delivery_location', {
+            orderId,
+            location
+          });
         },
         (error) => {
           console.error("Error tracking location:", error);

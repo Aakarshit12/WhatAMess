@@ -5,6 +5,8 @@ import Homepage from './components/Homepage';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Cart from './components/Cart';
+import FillAddress from './components/FillAddress';
+import PlaceOrder from './components/PlaceOrder';
 import Reward from './components/Reward';
 import Orders from './components/Orders';
 import TrackOrder from './components/TrackOrder';
@@ -29,6 +31,8 @@ const AppRoutes = () => {
         <Route path="/login" element={!currentUser ? <Login /> : <Navigate to="/" />} />
         <Route path="/signup" element={!currentUser ? <Signup /> : <Navigate to="/" />} />
         <Route path="/cart" element={currentUser ? <Cart /> : <Navigate to="/login" />} />
+        <Route path="/fill-address" element={currentUser ? <FillAddress /> : <Navigate to="/login" />} />
+        <Route path="/place-order" element={currentUser ? <PlaceOrder /> : <Navigate to="/login" />} />
         <Route path="/reward" element={currentUser ? <Reward /> : <Navigate to="/login" />} />
         <Route path="/orders" element={currentUser ? <Orders /> : <Navigate to="/login" />} />
         <Route path="/track-order/:orderId" element={currentUser ? <TrackOrder /> : <Navigate to="/login" />} />

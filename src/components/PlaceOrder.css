@@ -1,0 +1,29 @@
+.place-order-final-page {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.place-order-final-page h2 {
+  margin-bottom: 18px;
+}
+.place-order-final-page ul {
+  padding-left: 20px;
+}
+.place-order-final-page button {
+  background: #ff7e5f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 18px;
+}
+.place-order-final-page button:disabled {
+  background: #ffa07a;
+  cursor: not-allowed;
+}

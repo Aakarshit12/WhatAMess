@@ -427,7 +427,7 @@ router.post('/login-location', async (req, res) => {
 });
 
 // Get user's address (for Cart)
-router.get('/user/address', verifyToken, async (req, res) => {
+router.get('/address', verifyToken, async (req, res) => {
   try {
     const { uid } = req.user;
     const user = await User.findOne({ firebaseUid: uid });
@@ -442,7 +442,7 @@ router.get('/user/address', verifyToken, async (req, res) => {
 });
 
 // Get user's profile (for Cart, returns gender and other info)
-router.get('/user/profile', verifyToken, async (req, res) => {
+router.get('/profile', verifyToken, async (req, res) => {
   try {
     const { uid } = req.user;
     const user = await User.findOne({ firebaseUid: uid });
@@ -458,6 +458,25 @@ router.get('/user/profile', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching user profile:', error);
     res.status(500).json({ message: 'Failed to fetch profile', error: error.message });
+  }
+});
+
+// Search for mess owner by name
+router.get('/mess-owner/search', async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name) {
+      return res.status(400).json({ message: 'Name query is required' });
+    }
+    // Search users with role 'mess_owner' and name match (case-insensitive)
+    const owners = await User.find({
+      role: 'mess_owner',
+      name: { $regex: name, $options: 'i' }
+    }, '_id name email address');
+    res.json(owners);
+  } catch (error) {
+    console.error('Mess owner search error:', error);
+    res.status(500).json({ message: 'Error searching mess owners', error: error.message });
   }
 });
 

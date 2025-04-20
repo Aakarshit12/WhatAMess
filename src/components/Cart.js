@@ -69,12 +69,12 @@ const Cart = () => {
       try {
         setIsLoading(true);
         const [addressResponse, userResponse] = await Promise.all([
-          axios.get('http://localhost:8000/api/user/address', {
+          axios.get('http://localhost:8000/api/auth/address', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           }),
-          axios.get('http://localhost:8000/api/user/profile', {
+          axios.get('http://localhost:8000/api/auth/profile', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -95,69 +95,18 @@ const Cart = () => {
   }, []);
 
   // Handle Place Order button click
-  const handlePlaceOrder = async () => {
-    try {
-      setIsPlacingOrder(true);
-      setError(null);
-
-      const orderDetails = {
+  const handlePlaceOrder = () => {
+    // Redirect to FillAddress page, passing current cart/order state
+    navigate('/fill-address', {
+      state: {
+        selectedItems,
         messName,
-        items: selectedItems.map(item => ({
-          itemId: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: typeof item.price === 'number' ? item.price : parseInt((item.price + '').replace(/[^\d]/g, '')),
-          image: item.image
-        })),
-        totalAmount: totalPrice + 20,
-        deliveryAddress: userAddress,
         paymentMethod,
         specialInstructions,
-        preferWomenDelivery,
-        orderStatus: "Pending",
-        orderDate: new Date().toISOString()
-      };
-
-      const response = await axios.post(
-        'http://localhost:5000/api/orders/create',
-        orderDetails,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data && response.data.orderId) {
-        // Send WebSocket notification about new order
-        if (socket && isConnected) {
-          socket.send(JSON.stringify({
-            type: 'new_order',
-            payload: {
-              ...orderDetails,
-              orderId: response.data.orderId,
-              orderStatus: "Order Placed",
-              estimatedTime: "25-35 min"
-            }
-          }));
-        }
-
-        navigate("/orders", { 
-          state: { 
-            ...orderDetails,
-            orderId: response.data.orderId,
-            orderStatus: "Order Placed",
-            estimatedTime: "25-35 min"
-          }
-        });
+        preferWomenDelivery
       }
-    } catch (err) {
-      console.error('Error placing order:', err);
-      setError(err.response?.data?.message || 'Failed to place order. Please try again.');
-      setIsPlacingOrder(false);
-    }
-  };
+    });
+  }
 
   return (
     <div className="cart-page">

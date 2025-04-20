@@ -236,6 +236,7 @@ const Login = () => {
     try {
       // Use the enhanced login function that returns both user and role
       const result = await login(loginData.email, loginData.password);
+console.log('Login result:', result);
       // Optionally: send location to backend if needed
       if (latitude !== null && longitude !== null) {
         try {
@@ -249,6 +250,12 @@ const Login = () => {
         }
       }
       console.log("Login successful, received role:", result.role);
+      // Save Firebase ID token to localStorage for authenticated requests
+      const user = result.user || result;
+      if (user && user.getIdToken) {
+        const token = await user.getIdToken();
+        localStorage.setItem('token', token);
+      }
       
       // Use the role directly from the login response for immediate redirection
       if (result.role === 'mess_owner') {
@@ -356,24 +363,29 @@ const Login = () => {
   };
 
   const handleLoginAfterSignup = async (email, password) => {
-    const user = await login(email, password);
-    // Wait for userRole to be set
-    let attempts = 0;
-    const maxAttempts = 10;
-    while (!userRole && attempts < maxAttempts) {
-      await new Promise(res => setTimeout(res, 100));
-      attempts++;
-    }
-    if (userRole === 'mess_owner') {
-      navigate('/mess-dashboard');
-    } else if (userRole === 'customer') {
-      navigate('/customer-dashboard');
-    } else if (userRole === 'delivery_partner') {
-      navigate('/delivery-dashboard');
-    } else {
-      navigate('/');
-    }
-  };
+  const user = await login(email, password);
+  // Save Firebase ID token to localStorage for authenticated requests
+  if (user && user.getIdToken) {
+    const token = await user.getIdToken();
+    localStorage.setItem('token', token);
+  }
+  // Wait for userRole to be set
+  let attempts = 0;
+  const maxAttempts = 10;
+  while (!userRole && attempts < maxAttempts) {
+    await new Promise(res => setTimeout(res, 100));
+    attempts++;
+  }
+  if (userRole === 'mess_owner') {
+    navigate('/mess-dashboard');
+  } else if (userRole === 'customer') {
+    navigate('/customer-dashboard');
+  } else if (userRole === 'delivery_partner') {
+    navigate('/delivery-dashboard');
+  } else {
+    navigate('/');
+  }
+};
 
   const handleUserTypeChange = (event, newUserType) => {
     if (newUserType !== null) {
